@@ -4,6 +4,7 @@ import helmet from "helmet";
 import authRoutes from "./modules/auth/auth.routes";
 import oauthRoutes from "./modules/auth/oauth/oauth.routes";
 import mfaRoutes from "./modules/auth/mfa/mfa.routes";
+import projectRoutes from "./modules/project/project.routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import corsConfig from "./config/cors";
 
@@ -29,6 +30,7 @@ app.get("/health", (_req, res) => {
 app.use("/auth", authRoutes);
 app.use("/auth/oauth", oauthRoutes);
 app.use("/auth/mfa", mfaRoutes);
+app.use("/projects", projectRoutes);
 
 // --- Error Handler ---
 // MUST be last — it catches errors thrown by routes above

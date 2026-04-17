@@ -43,7 +43,7 @@ export default function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       {children}
       <Toaster
-        position="top-right"
+        position="bottom-right"
         richColors
         closeButton
         toastOptions={{ duration: 4000 }}
