@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
+import AuthBootstrap from "@/components/AuthBootstrap";
 
 // ─── QueryClient defaults ───
 // These are sensible defaults for an auth app.
@@ -15,8 +16,13 @@ function makeQueryClient() {
     defaultOptions: {
       queries: {
         staleTime: 5 * 60 * 1000,
+        gcTime: 15 * 60 * 1000,
         retry: 1,
         refetchOnWindowFocus: false,
+        refetchOnReconnect: true,
+      },
+      mutations: {
+        retry: 0,
       },
     },
   });
@@ -41,6 +47,7 @@ export default function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AuthBootstrap />
       {children}
       <Toaster
         position="bottom-right"

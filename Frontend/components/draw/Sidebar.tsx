@@ -88,14 +88,14 @@ export default function Sidebar({
 
       const startX = event.clientX;
       const startWidth = sidebarWidth;
-      let didCollapse = false;
+      let latestRawWidth = startWidth;
 
       document.body.style.userSelect = "none";
       document.body.style.cursor = "col-resize";
 
       const cleanup = () => {
         window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", cleanup);
+        window.removeEventListener("mouseup", handleMouseUp);
         document.body.style.userSelect = "";
         document.body.style.cursor = "";
         resizeCleanupRef.current = null;
@@ -104,14 +104,7 @@ export default function Sidebar({
       const handleMouseMove = (moveEvent: MouseEvent) => {
         const deltaX = moveEvent.clientX - startX;
         const rawWidth = startWidth + deltaX;
-
-        if (!didCollapse && rawWidth <= collapseThreshold) {
-          didCollapse = true;
-          onResize(Math.max(minSidebarWidth, collapseThreshold));
-          onCollapse();
-          cleanup();
-          return;
-        }
+        latestRawWidth = rawWidth;
 
         const nextWidth = Math.min(
           maxSidebarWidth,
@@ -121,9 +114,25 @@ export default function Sidebar({
         onResize(nextWidth);
       };
 
+      const handleMouseUp = () => {
+        if (latestRawWidth <= collapseThreshold) {
+          onResize(Math.max(minSidebarWidth, collapseThreshold));
+          onCollapse();
+        } else {
+          onResize(
+            Math.min(
+              maxSidebarWidth,
+              Math.max(minSidebarWidth, latestRawWidth),
+            ),
+          );
+        }
+
+        cleanup();
+      };
+
       resizeCleanupRef.current = cleanup;
       window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", cleanup);
+      window.addEventListener("mouseup", handleMouseUp);
     },
     [
       collapseThreshold,
@@ -145,18 +154,18 @@ export default function Sidebar({
   return (
     <>
       <aside
-        className={`absolute left-0 top-0 z-30 h-full border-r border-[#ddd6cb] bg-[#fcfbf8] dark:border-[#3a342e] dark:bg-[#212121] overflow-hidden transition-transform duration-300 ease-in-out ${
+        className={`absolute left-0 top-0 z-30 h-full border-r border-[rgba(186,200,221,0.75)] bg-[rgba(245,248,255,0.72)] dark:border-[rgba(73,88,114,0.75)] dark:bg-[rgba(14,22,36,0.72)] backdrop-blur-xl overflow-hidden transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         style={{ width: sidebarWidth }}
       >
-        <div className="p-3.5 border-b border-[#ddd6cb] dark:border-[#3a342e]">
+        <div className="p-3.5 border-b border-[rgba(186,200,221,0.75)] dark:border-[rgba(73,88,114,0.75)]">
           <button
             type="button"
             onClick={() => {
               void onCreateProject();
             }}
-            className="w-full rounded-md bg-[#6e5436] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#584329] dark:bg-[#8b6a43] dark:hover:bg-[#a17a4d]"
+            className="w-full rounded-xl bg-linear-to-r from-[#4f7cff] to-[#6aa4ff] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(79,124,255,0.25)] transition-all hover:from-[#426ef2] hover:to-[#5a94f2] dark:from-[#5b86ff] dark:to-[#6e9dff] dark:hover:from-[#6b95ff] dark:hover:to-[#7ba8ff]"
           >
             + New Project
           </button>
@@ -164,7 +173,7 @@ export default function Sidebar({
 
         <div className="h-[calc(100vh-8.25rem)] overflow-y-auto px-2.5 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {projects.length === 0 ? (
-            <p className="px-2 py-3 text-sm text-[#7a6c5d] dark:text-[#b9b0a5]">
+            <p className="px-2 py-3 text-sm text-[#58708f] dark:text-[#9db0c7]">
               No projects yet. Create one to get started.
             </p>
           ) : (
@@ -177,8 +186,8 @@ export default function Sidebar({
                   key={project.id}
                   className={`mb-2 rounded-md border px-3 py-2.5 transition-colors ${
                     isActive
-                      ? "border-[#ddd6cb] bg-[#efe6d8] dark:border-[#3a342e] dark:bg-[#342b22]"
-                      : "border-[#ddd6cb] bg-transparent hover:bg-[#f2eee8] dark:border-[#3a342e] dark:hover:bg-[#2a2a2a]"
+                      ? "border-[rgba(128,159,222,0.65)] bg-[rgba(198,221,255,0.45)] dark:border-[rgba(93,127,193,0.65)] dark:bg-[rgba(39,58,90,0.5)]"
+                      : "border-[rgba(186,200,221,0.55)] bg-[rgba(255,255,255,0.28)] hover:bg-[rgba(227,239,255,0.45)] dark:border-[rgba(73,88,114,0.65)] dark:bg-[rgba(20,30,48,0.3)] dark:hover:bg-[rgba(37,51,78,0.55)]"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -199,7 +208,7 @@ export default function Sidebar({
                             cancelRename();
                           }
                         }}
-                        className="min-w-0 flex-1 rounded border border-[#ddd6cb] bg-white px-2 py-1 text-sm text-[#2f2720] outline-none focus:border-[#6e5436] dark:border-[#4a4a4a] dark:bg-[#3a3a3a] dark:text-[#ece7de] dark:focus:border-[#8b6a43]"
+                        className="min-w-0 flex-1 rounded border border-[rgba(176,196,223,0.9)] bg-[rgba(255,255,255,0.85)] px-2 py-1 text-sm text-[#1d3552] outline-none focus:border-[#5b8bd8] dark:border-[rgba(81,101,133,0.9)] dark:bg-[rgba(30,44,68,0.85)] dark:text-[#e4edf9] dark:focus:border-[#7ca7ef]"
                         autoFocus
                       />
                     ) : (
@@ -208,10 +217,10 @@ export default function Sidebar({
                         onClick={() => onSelectProject(project.id)}
                         className="min-w-0 flex-1 text-left"
                       >
-                        <p className="truncate text-[13px] font-medium text-[#2f2720] dark:text-[#ece7de]">
+                        <p className="truncate text-[13px] font-medium text-[#223a56] dark:text-[#e4edf9]">
                           {project.title}
                         </p>
-                        <p className="mt-0.5 text-[11px] text-[#7a6c5d] dark:text-[#b9b0a5]">
+                        <p className="mt-0.5 text-[11px] text-[#58708f] dark:text-[#9db0c7]">
                           Updated {new Date(project.updatedAt).toLocaleString()}
                         </p>
                       </button>
@@ -228,7 +237,7 @@ export default function Sidebar({
 
                           startRename(project.id, project.title);
                         }}
-                        className="rounded p-1 text-[#2f2720] transition-colors hover:bg-[#e9e2d8] dark:text-[#ece7de] dark:hover:bg-[#2a2a2a]"
+                        className="rounded p-1 text-[#36557b] transition-colors hover:bg-[rgba(172,204,247,0.35)] dark:text-[#b9d4ff] dark:hover:bg-[rgba(70,96,140,0.45)]"
                         aria-label={
                           isEditing ? "Save project name" : "Rename project"
                         }
@@ -275,7 +284,7 @@ export default function Sidebar({
                         <button
                           type="button"
                           onClick={cancelRename}
-                          className="rounded p-1 text-[#7a6c5d] transition-colors hover:bg-[#e9e2d8] dark:text-[#b9b0a5] dark:hover:bg-[#2a2a2a]"
+                          className="rounded p-1 text-[#6c7f95] transition-colors hover:bg-[rgba(172,204,247,0.35)] dark:text-[#97abc2] dark:hover:bg-[rgba(70,96,140,0.45)]"
                           aria-label="Cancel rename"
                         >
                           <svg
@@ -306,7 +315,7 @@ export default function Sidebar({
                           cancelRename();
                           void onDeleteProject(project.id);
                         }}
-                        className="rounded p-1 text-[#9e3d30] transition-colors hover:bg-[#f0ddd9] dark:text-[#d8a9a1] dark:hover:bg-[#3a2522]"
+                        className="rounded p-1 text-[#b14f52] transition-colors hover:bg-[rgba(241,169,176,0.25)] dark:text-[#f0a8ae] dark:hover:bg-[rgba(148,67,79,0.4)]"
                         aria-label="Delete project"
                       >
                         <svg
@@ -341,7 +350,7 @@ export default function Sidebar({
           )}
         </div>
 
-        <div className="border-t border-[#ddd6cb] px-3 py-2 text-xs text-[#7a6c5d] dark:border-[#3a342e] dark:text-[#b9b0a5]">
+        <div className="border-t border-[rgba(186,200,221,0.75)] px-3 py-2 text-xs text-[#58708f] dark:border-[rgba(73,88,114,0.75)] dark:text-[#9db0c7]">
           {isBusy
             ? "Syncing changes..."
             : isSaving
@@ -352,7 +361,7 @@ export default function Sidebar({
         </div>
 
         <div
-          className="absolute right-0 top-0 h-full w-2 cursor-col-resize bg-transparent hover:bg-[#ddd6cb]/35 dark:hover:bg-[#3a342e]/45"
+          className="absolute right-0 top-0 h-full w-2 cursor-col-resize bg-transparent hover:bg-[rgba(130,164,214,0.38)] dark:hover:bg-[rgba(87,116,170,0.45)]"
           onMouseDown={handleResizeStart}
           role="separator"
           aria-orientation="vertical"
@@ -363,7 +372,7 @@ export default function Sidebar({
       <button
         type="button"
         onClick={onToggle}
-        className="absolute top-1/2 z-40 -translate-y-1/2 rounded-r-md border-r border-y px-2 py-2 text-base leading-none transition-all duration-300 ease-in-out border-[#ddd6cb] bg-[#f2eee8] text-[#2f2720] hover:bg-[#e9e2d8] dark:border-[#3a342e] dark:bg-[#1d1d1d] dark:text-[#ece7de] dark:hover:bg-[#2a2a2a]"
+        className="absolute top-1/2 z-40 -translate-y-1/2 rounded-r-md border-r border-y px-2 py-2 text-base leading-none transition-all duration-300 ease-in-out border-[rgba(186,200,221,0.8)] bg-[rgba(239,246,255,0.86)] text-[#36557b] hover:bg-[rgba(215,231,253,0.95)] dark:border-[rgba(73,88,114,0.85)] dark:bg-[rgba(26,39,59,0.9)] dark:text-[#b9d4ff] dark:hover:bg-[rgba(39,56,84,0.95)]"
         style={{ left: isOpen ? sidebarWidth : 0 }}
         aria-label={isOpen ? "Close projects sidebar" : "Open projects sidebar"}
       >

@@ -15,8 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AuthHero",
-  description: "The ultimate authentication solution for your applications.",
+  title: {
+    default: "Draw2gether",
+    template: "%s | Draw2gether",
+  },
+  description: "Collaborative whiteboard workspace with secure authentication.",
+  applicationName: "Draw2gether",
 };
 
 export default function RootLayout({
@@ -25,10 +29,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-[#1C1C1C] text-zinc-50 flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <Providers>
           {/* <Navbar /> */}

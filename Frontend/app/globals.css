@@ -363,7 +363,7 @@ body {
   font-family: "Virgil", "Comic Sans MS", cursive;
   font-size: 1.15rem;
   letter-spacing: 0.01em;
-  color: #d7d7d7;
+  color: #171717;
   text-decoration-line: underline;
   text-decoration-style: wavy;
   text-underline-offset: 0.18em;
@@ -377,8 +377,8 @@ body {
 }
 
 .excalidraw-ink-link:hover {
-  font-weight: 700;
-  color: #f2f2f2;
+  font-weight: 900;
+  color: #100f0f;
   text-decoration-color: #4eeea0;
   text-shadow: 0 0 10px rgba(78, 238, 160, 0.35);
 }

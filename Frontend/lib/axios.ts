@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/stores/auth.store";
+import { env } from "@/lib/env";
 
 /**
  * Extend AxiosRequestConfig to support custom retry flag
@@ -12,7 +13,7 @@ interface CustomAxiosRequestConfig extends AxiosRequestConfig {
  * Main API client
  */
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  baseURL: env.backendUrl,
   withCredentials: true, // required for httpOnly cookies
   headers: {
     "Content-Type": "application/json",
@@ -24,18 +25,19 @@ const api: AxiosInstance = axios.create({
  * Dedicated refresh client (no interceptors attached)
  */
 const refreshClient: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  baseURL: env.backendUrl,
   withCredentials: true,
   timeout: 15000,
 });
 
 let refreshPromise: Promise<unknown> | null = null;
+let hasRedirectedToLogin = false;
 
 // Add Authorization header to every request
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().accessToken;
-    if (token) {
+    if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -88,7 +90,8 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Refresh failed → clear auth & redirect to login
         useAuthStore.getState().clearAuth();
-        if (typeof window !== "undefined") {
+        if (typeof window !== "undefined" && !hasRedirectedToLogin) {
+          hasRedirectedToLogin = true;
           window.location.href = "/login";
         }
 
