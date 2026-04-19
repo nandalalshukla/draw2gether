@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type SidebarProject = {
   id: string;
@@ -11,7 +11,13 @@ export type SidebarProject = {
 type SidebarProps = {
   projects: SidebarProject[];
   isOpen: boolean;
+  sidebarWidth: number;
+  minSidebarWidth: number;
+  maxSidebarWidth: number;
+  collapseThreshold: number;
   onToggle: () => void;
+  onResize: (nextWidth: number) => void;
+  onCollapse: () => void;
   activeProjectId: string | null;
   isAuthenticated: boolean;
   isBusy: boolean;
@@ -28,7 +34,13 @@ type SidebarProps = {
 export default function Sidebar({
   projects,
   isOpen,
+  sidebarWidth,
+  minSidebarWidth,
+  maxSidebarWidth,
+  collapseThreshold,
   onToggle,
+  onResize,
+  onCollapse,
   activeProjectId,
   isAuthenticated,
   isBusy,
@@ -40,6 +52,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const resizeCleanupRef = useRef<(() => void) | null>(null);
 
   const startRename = useCallback((projectId: string, title: string) => {
     setEditingProjectId(projectId);
@@ -65,12 +78,77 @@ export default function Sidebar({
     [cancelRename, editingTitle, onRenameProject],
   );
 
+  const handleResizeStart = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!isOpen) {
+        return;
+      }
+
+      event.preventDefault();
+
+      const startX = event.clientX;
+      const startWidth = sidebarWidth;
+      let didCollapse = false;
+
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "col-resize";
+
+      const cleanup = () => {
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", cleanup);
+        document.body.style.userSelect = "";
+        document.body.style.cursor = "";
+        resizeCleanupRef.current = null;
+      };
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        const deltaX = moveEvent.clientX - startX;
+        const rawWidth = startWidth + deltaX;
+
+        if (!didCollapse && rawWidth <= collapseThreshold) {
+          didCollapse = true;
+          onResize(Math.max(minSidebarWidth, collapseThreshold));
+          onCollapse();
+          cleanup();
+          return;
+        }
+
+        const nextWidth = Math.min(
+          maxSidebarWidth,
+          Math.max(minSidebarWidth, rawWidth),
+        );
+
+        onResize(nextWidth);
+      };
+
+      resizeCleanupRef.current = cleanup;
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", cleanup);
+    },
+    [
+      collapseThreshold,
+      isOpen,
+      maxSidebarWidth,
+      minSidebarWidth,
+      onCollapse,
+      onResize,
+      sidebarWidth,
+    ],
+  );
+
+  useEffect(() => {
+    return () => {
+      resizeCleanupRef.current?.();
+    };
+  }, []);
+
   return (
     <>
       <aside
-        className={`absolute left-0 top-0 z-30 h-full w-80 border-r border-[#ddd6cb] bg-[#fcfbf8] dark:border-[#3a342e] dark:bg-[#212121] overflow-hidden transition-transform duration-300 ease-in-out ${
+        className={`absolute left-0 top-0 z-30 h-full border-r border-[#ddd6cb] bg-[#fcfbf8] dark:border-[#3a342e] dark:bg-[#212121] overflow-hidden transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
+        style={{ width: sidebarWidth }}
       >
         <div className="p-3.5 border-b border-[#ddd6cb] dark:border-[#3a342e]">
           <button
@@ -272,16 +350,21 @@ export default function Sidebar({
                 ? "Auto-saved to database"
                 : "Auto-saved locally"}
         </div>
+
+        <div
+          className="absolute right-0 top-0 h-full w-2 cursor-col-resize bg-transparent hover:bg-[#ddd6cb]/35 dark:hover:bg-[#3a342e]/45"
+          onMouseDown={handleResizeStart}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize projects sidebar"
+        />
       </aside>
 
       <button
         type="button"
         onClick={onToggle}
-        className={`absolute top-1/2 z-40 -translate-y-1/2 rounded-r-md border-r border-y px-2 py-2 text-base leading-none transition-all duration-300 ease-in-out ${
-          isOpen
-            ? "left-80 border-[#ddd6cb] bg-[#f2eee8] text-[#2f2720] hover:bg-[#e9e2d8] dark:border-[#3a342e] dark:bg-[#1d1d1d] dark:text-[#ece7de] dark:hover:bg-[#2a2a2a]"
-            : "left-0 border-[#ddd6cb] bg-[#f2eee8] text-[#2f2720] hover:bg-[#e9e2d8] dark:border-[#3a342e] dark:bg-[#1d1d1d] dark:text-[#ece7de] dark:hover:bg-[#2a2a2a]"
-        }`}
+        className="absolute top-1/2 z-40 -translate-y-1/2 rounded-r-md border-r border-y px-2 py-2 text-base leading-none transition-all duration-300 ease-in-out border-[#ddd6cb] bg-[#f2eee8] text-[#2f2720] hover:bg-[#e9e2d8] dark:border-[#3a342e] dark:bg-[#1d1d1d] dark:text-[#ece7de] dark:hover:bg-[#2a2a2a]"
+        style={{ left: isOpen ? sidebarWidth : 0 }}
         aria-label={isOpen ? "Close projects sidebar" : "Open projects sidebar"}
       >
         {isOpen ? "<" : ">"}

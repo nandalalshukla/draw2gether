@@ -382,3 +382,17 @@ body {
   text-decoration-color: #4eeea0;
   text-shadow: 0 0 10px rgba(78, 238, 160, 0.35);
 }
+
+/* Keep Excalidraw top-left menu controls above the custom project sidebar */
+.excalidraw .App-menu_top {
+  position: relative;
+  z-index: 60;
+}
+
+.excalidraw .main-menu-trigger,
+.excalidraw .dropdown-menu-button,
+.excalidraw .default-sidebar-trigger,
+.excalidraw .sidebar-trigger {
+  position: relative;
+  z-index: 61;
+}

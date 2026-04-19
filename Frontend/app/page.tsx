@@ -86,6 +86,10 @@ function createLocalProject(title?: string): LocalProject {
 }
 
 export default function Home() {
+  const MIN_SIDEBAR_WIDTH = 120;
+  const MAX_SIDEBAR_WIDTH = 520;
+  const COLLAPSE_SIDEBAR_WIDTH = 170;
+
   const [localProjects, setLocalProjects] = useState<LocalProject[]>(() => {
     const storedProjects = readLocalProjects();
     if (storedProjects.length > 0) {
@@ -101,6 +105,7 @@ export default function Home() {
     return storedProjects[0]?.id ?? null;
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [sidebarWidth, setSidebarWidth] = useState(320);
 
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = Boolean(user);
@@ -338,7 +343,10 @@ export default function Home() {
 
   return (
     <main className="relative w-full h-screen overflow-hidden bg-[#f7f6f3] text-[#2f2720] dark:bg-[#171717] dark:text-[#ece7de]">
-      <div className="h-full w-full">
+      <div
+        className="h-full w-full transition-[padding] duration-300 ease-in-out"
+        style={{ paddingLeft: isSidebarOpen ? sidebarWidth : 0 }}
+      >
         <ExcalidrawCanvas
           sceneData={activeProject?.sceneData ?? null}
           onSceneChange={handleSceneChange}
@@ -352,7 +360,13 @@ export default function Home() {
           updatedAt: project.updatedAt,
         }))}
         isOpen={isSidebarOpen}
+        sidebarWidth={sidebarWidth}
+        minSidebarWidth={MIN_SIDEBAR_WIDTH}
+        maxSidebarWidth={MAX_SIDEBAR_WIDTH}
+        collapseThreshold={COLLAPSE_SIDEBAR_WIDTH}
         onToggle={() => setIsSidebarOpen((current) => !current)}
+        onResize={setSidebarWidth}
+        onCollapse={() => setIsSidebarOpen(false)}
         activeProjectId={resolvedActiveProjectId}
         isAuthenticated={isAuthenticated}
         isBusy={isBusy}
